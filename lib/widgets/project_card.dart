@@ -55,38 +55,38 @@ class ProjectCard extends StatelessWidget {
           onLongPress: onLongPress,
           child: Stack(
             children: [
+              // Die Karte selbst bestimmt die Höhe (intrinsisch über den
+              // Inhalt) — kein CrossAxisAlignment.stretch, das in einer
+              // ListView mit unbegrenzter Höhe zu Null-Höhe kollabieren würde.
               Container(
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: AppColors.border, width: 1),
                 ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Todeszone-Markierung: dünne Linie am Kartenrand.
-                    Container(
-                      width: 3,
-                      decoration: BoxDecoration(
-                        color: project.inDeathZone
-                            ? AppColors.deathZone
-                            : Colors.transparent,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(10),
-                          bottomLeft: Radius.circular(10),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                        child: _content(context, textColor, metaColor, hue,
-                            effStale, topDeltas, extra, isPaused),
-                      ),
-                    ),
-                  ],
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 14, 12),
+                  child: _content(context, textColor, metaColor, hue, effStale,
+                      topDeltas, extra, isPaused),
                 ),
               ),
+              // Todeszone-Markierung: dünne Linie am linken Kartenrand.
+              if (project.inDeathZone)
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: 3,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: AppColors.deathZone,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(10),
+                        bottomLeft: Radius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
               if (effStale.hasGrain)
                 Positioned.fill(
                   child: ClipRRect(

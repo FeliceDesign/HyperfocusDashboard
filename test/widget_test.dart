@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:focus_ledger/models/enums.dart';
@@ -6,6 +7,8 @@ import 'package:focus_ledger/models/staleness.dart';
 import 'package:focus_ledger/models/delta_item.dart';
 import 'package:focus_ledger/models/check_in.dart';
 import 'package:focus_ledger/utils/dates.dart';
+import 'package:focus_ledger/theme/app_theme.dart';
+import 'package:focus_ledger/widgets/project_card.dart';
 
 void main() {
   Project fresh({DateTime? createdAt}) => Project(
@@ -138,6 +141,29 @@ void main() {
       // 29.12.2025 (Montag) liegt bereits in KW 1 / 2026.
       expect(isoWeekNumber(DateTime(2025, 12, 29)), 1);
       expect(isoWeekYear(DateTime(2025, 12, 29)), 2026);
+    });
+  });
+
+  group('ProjectCard-Rendering', () {
+    testWidgets('rendert mit Höhe > 0 in einer ListView (kein Kollaps)',
+        (tester) async {
+      final p = fresh();
+      p.checkIns.add(CheckIn(id: 's', date: DateTime.now(), feltPercent: 78));
+      p.deltas.add(DeltaItem(id: 'd', text: 'Doku-Kapitel 3', createdAt: DateTime.now()));
+
+      await tester.pumpWidget(MaterialApp(
+        theme: AppTheme.build(),
+        home: Scaffold(
+          body: ListView(
+            children: [ProjectCard(project: p, onTap: () {})],
+          ),
+        ),
+      ));
+
+      final size = tester.getSize(find.byType(ProjectCard));
+      expect(size.height, greaterThan(0));
+      expect(find.text('SPEKTRA'), findsOneWidget);
+      expect(find.textContaining('78%'), findsOneWidget);
     });
   });
 
