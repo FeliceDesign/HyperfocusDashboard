@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../models/enums.dart';
 import '../services/ledger.dart';
 import '../theme/app_theme.dart';
 import '../widgets/progress_bar.dart';

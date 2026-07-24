@@ -6,7 +6,6 @@ import '../services/ledger.dart';
 import '../theme/app_theme.dart';
 import '../widgets/project_card.dart';
 import 'archive_screen.dart';
-import 'check_in_screen.dart';
 import 'new_project_screen.dart';
 import 'project_detail_screen.dart';
 import 'settings_screen.dart';
