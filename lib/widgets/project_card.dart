@@ -11,10 +11,16 @@ import 'progress_bar.dart';
 /// Die Projekt-Karte mit vier Informationsebenen:
 /// Balken + %, Momentum-Pfeil, Top-Deltas als Klartext, Tage seit Check-in.
 class ProjectCard extends StatelessWidget {
-  const ProjectCard({super.key, required this.project, required this.onTap});
+  const ProjectCard({
+    super.key,
+    required this.project,
+    required this.onTap,
+    this.onLongPress,
+  });
 
   final Project project;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +52,7 @@ class ProjectCard extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
           onTap: onTap,
+          onLongPress: onLongPress,
           child: Stack(
             children: [
               Container(
@@ -150,16 +157,19 @@ class ProjectCard extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(width: 6),
-            Text(
-              project.momentum.arrow,
-              style: TextStyle(
-                color: project.momentum == Momentum.down
-                    ? AppColors.danger
-                    : metaColor,
-                fontSize: 16,
+            // Momentum-Pfeil nur ab drei echten Check-ins.
+            if (project.momentum != null) ...[
+              const SizedBox(width: 6),
+              Text(
+                project.momentum!.arrow,
+                style: TextStyle(
+                  color: project.momentum == Momentum.down
+                      ? AppColors.danger
+                      : metaColor,
+                  fontSize: 16,
+                ),
               ),
-            ),
+            ],
           ],
         ),
         const SizedBox(height: 8),

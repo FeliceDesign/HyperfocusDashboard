@@ -20,6 +20,7 @@ enum Staleness {
   }
 
   /// Wie stark die Sättigung entzogen wird (0 = volle Farbe, 1 = monochrom).
+  /// Sättigung: fresh 100%, cool 70%, cracked 40%, dust 15%.
   double get desaturation {
     switch (this) {
       case Staleness.frisch:
@@ -29,19 +30,19 @@ enum Staleness {
       case Staleness.rissig:
         return 0.60;
       case Staleness.staub:
-        return 0.90;
+        return 0.85;
     }
   }
 
-  /// Zusätzliche Abdunklung des Texts / der Karte.
+  /// Textdeckkraft-Verlust: fresh 100%, cool 85%, cracked 70%, dust 55%.
   double get dim {
     switch (this) {
       case Staleness.frisch:
         return 0.0;
       case Staleness.kuehl:
-        return 0.12;
+        return 0.15;
       case Staleness.rissig:
-        return 0.28;
+        return 0.30;
       case Staleness.staub:
         return 0.45;
     }

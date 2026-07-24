@@ -44,12 +44,18 @@ class Project {
   List<CheckIn> get checkInsChrono =>
       [...checkIns]..sort((a, b) => a.date.compareTo(b.date));
 
+  /// Echte Check-ins (ohne Seed), chronologisch. Basis für Momentum/Todeszone.
+  List<CheckIn> get realCheckIns =>
+      checkInsChrono.where((c) => !c.isSeed).toList(growable: false);
+
+  int get realCheckInCount => realCheckIns.length;
+
   CheckIn? get lastCheckIn {
     if (checkIns.isEmpty) return null;
     return checkInsChrono.last;
   }
 
-  /// Der gefühlte Stand (letzter Check-in), sonst 0.
+  /// Der gefühlte Stand (letzter Check-in, Seed eingeschlossen), sonst 0.
   int get feltPercent => lastCheckIn?.feltPercent ?? 0;
 
   List<DeltaItem> get openDeltas =>
@@ -58,14 +64,25 @@ class Project {
   List<DeltaItem> get resolvedDeltas =>
       deltas.where((d) => !d.isOpen).toList(growable: false);
 
-  /// Der letzte Zeitpunkt mit *tatsächlicher Veränderung*:
-  /// ein Delta wurde angelegt oder abgehakt. Nur Slider-Antippen zählt nicht.
+  /// Der letzte Zeitpunkt mit *tatsächlicher Veränderung*. Aktualisiert sich,
+  /// wenn bei einem Check-in mindestens eines passiert:
+  ///  - ein Delta wurde abgehakt,
+  ///  - ein neues Delta wurde angelegt,
+  ///  - feltPercent hat sich um ≥ 1 verändert.
+  /// Ein Check-in ohne jede Änderung (Slider auf denselben Wert) zählt nicht.
   DateTime get lastMeaningfulChange {
     var latest = createdAt;
     for (final d in deltas) {
       if (d.createdAt.isAfter(latest)) latest = d.createdAt;
       final r = d.resolvedAt;
       if (r != null && r.isAfter(latest)) latest = r;
+    }
+    // Check-ins, die den gefühlten Prozentsatz um ≥ 1 bewegt haben.
+    final chrono = checkInsChrono;
+    for (var i = 1; i < chrono.length; i++) {
+      if ((chrono[i].feltPercent - chrono[i - 1].feltPercent).abs() >= 1) {
+        if (chrono[i].date.isAfter(latest)) latest = chrono[i].date;
+      }
     }
     return latest;
   }
@@ -92,54 +109,67 @@ class Project {
     return Staleness.fromDays(daysSinceMeaningfulChange);
   }
 
-  /// Richtung der letzten (bis zu drei) Check-ins.
-  Momentum get momentum {
-    final chrono = checkInsChrono;
-    if (chrono.length < 2) return Momentum.flat;
-    final window = chrono.length <= 3
-        ? chrono
-        : chrono.sublist(chrono.length - 3);
-    final diff = window.last.feltPercent - window.first.feltPercent;
-    if (diff > 2) return Momentum.up;
-    if (diff < -2) return Momentum.down;
+  /// Richtung der letzten drei *echten* Check-ins. Ohne mindestens drei
+  /// echte Check-ins gibt es kein Momentum (null → kein Pfeil, kein Bericht).
+  ///
+  ///   percentDelta   = feltPercent(n) − feltPercent(n−2)
+  ///   deltasResolved = abgehakte Deltas über diese drei Check-ins
+  ///   steigend: percentDelta >= +3  ODER  deltasResolved >= 2
+  ///   fallend:  percentDelta <= −3
+  ///   flach:    alles andere
+  Momentum? get momentum {
+    final real = realCheckIns;
+    if (real.length < 3) return null;
+    final n = real.length;
+    final percentDelta = real[n - 1].feltPercent - real[n - 3].feltPercent;
+    final windowStart = real[n - 3].date;
+    final windowEnd = real[n - 1].date;
+    var deltasResolved = 0;
+    for (final d in deltas) {
+      final r = d.resolvedAt;
+      if (r != null && !r.isBefore(windowStart) && !r.isAfter(windowEnd)) {
+        deltasResolved++;
+      }
+    }
+    if (percentDelta >= 3 || deltasResolved >= 2) return Momentum.up;
+    if (percentDelta <= -3) return Momentum.down;
     return Momentum.flat;
   }
 
-  /// Wie viele Check-ins am Stück das Momentum schon flach/fallend ist.
+  /// Anzahl aufeinanderfolgender nicht-steigender echter Check-ins am Ende.
   int get flatStreak {
-    final chrono = checkInsChrono;
-    if (chrono.length < 2) return 0;
+    final real = realCheckIns;
+    if (real.length < 3) return 0;
     var streak = 0;
-    for (var i = chrono.length - 1; i > 0; i--) {
-      final diff = chrono[i].feltPercent - chrono[i - 1].feltPercent;
-      if (diff <= 2) {
-        streak++;
-      } else {
-        break;
-      }
+    for (var i = real.length - 1; i > 0; i--) {
+      final rising = (real[i].feltPercent - real[i - 1].feltPercent) >= 3;
+      if (rising) break;
+      streak++;
     }
     return streak;
   }
 
-  /// Die Todeszone: 70–95% mit flachem oder fallendem Momentum.
-  /// Spezifisch dein Muster — die App macht daraus eine benannte Kategorie.
+  /// Die Todeszone: 70–95% mit flachem oder fallendem Momentum — und erst ab
+  /// drei echten Check-ins, sonst ist die Kategorie entwertet, bevor sie das
+  /// erste Mal etwas bedeutet.
   bool get inDeathZone {
     if (!status.countsAgainstWip) return false;
+    final m = momentum;
+    if (m == null) return false; // < 3 echte Check-ins
     final p = feltPercent;
-    return p >= 70 && p <= 95 && momentum != Momentum.up;
+    return p >= 70 && p <= 95 && m != Momentum.up;
   }
 
-  /// Soll beim Öffnen die Pausiert-oder-verhungert-Frage gestellt werden?
+  /// Soll die Pausiert-oder-verhungert-Frage gestellt werden?
   bool get needsStaleDecision =>
       status == ProjectStatus.aktiv &&
-      daysSinceMeaningfulChange >= kStaleQuestionDays;
+      daysSinceMeaningfulChange > kStaleQuestionDays;
 
-  /// Ein Delta, das seit über 60 Tagen offen ist — meistens der wahre Grund,
-  /// warum das Projekt steht.
+  /// Ein Delta, das seit über 30 Tagen offen ist — meistens der wahre Grund,
+  /// warum das Projekt steht. Wird visuell markiert.
   bool isDeltaStuck(DeltaItem d) {
     if (!d.isOpen) return false;
-    final now = DateTime.now();
-    return now.difference(d.createdAt).inDays >= 60;
+    return d.ageInDays >= 30;
   }
 
   // ---------------------------------------------------------------------------

@@ -50,8 +50,12 @@ class ArchiveScreen extends StatelessWidget {
       );
 
   Widget _empty(String text) => Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Text(text, style: const TextStyle(color: AppColors.textFaint)),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+        child: Center(
+          child: Text(text,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.textFaint)),
+        ),
       );
 
   Widget _tile(BuildContext context, Project p, {required bool done}) {

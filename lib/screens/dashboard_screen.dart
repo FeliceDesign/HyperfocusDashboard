@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/enums.dart';
 import '../models/project.dart';
 import '../services/ledger.dart';
 import '../theme/app_theme.dart';
 import '../widgets/project_card.dart';
 import 'archive_screen.dart';
+import 'burial_screen.dart';
+import 'check_in_screen.dart';
 import 'new_project_screen.dart';
 import 'project_detail_screen.dart';
 import 'settings_screen.dart';
@@ -54,6 +57,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         return ProjectCard(
                           project: p,
                           onTap: () => _openProject(p),
+                          onLongPress: () => _cardMenu(p),
                         );
                       },
                     ),
@@ -144,18 +148,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Leere Warteschlange.',
+              const Text('Noch keine Projekte.',
                   style: TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 18,
                       fontWeight: FontWeight.w700)),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               const Text(
-                'Diese App optimiert nicht fürs Anfangen, sondern fürs '
-                'Abschließen. Leg genau das an, was du wirklich fertig machen '
-                'willst — und definiere, wann es fertig ist.',
+                'Ein Projekt ist etwas, von dem du in einem Satz\n'
+                'sagen kannst, wann es fertig ist.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textFaint, fontSize: 14, height: 1.4),
+                style: TextStyle(color: AppColors.textFaint, fontSize: 14, height: 1.5),
               ),
             ],
           ),
@@ -168,6 +171,110 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => ProjectDetailScreen(projectId: p.id),
     ));
+  }
+
+  /// Long-Press → Kontextmenü: Check-in, Pausieren, Abschließen, Beerdigen.
+  Future<void> _cardMenu(Project p) async {
+    final ledger = context.read<Ledger>();
+    final canCheckIn = p.status == ProjectStatus.aktiv ||
+        p.status == ProjectStatus.verhungert;
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Row(
+                children: [
+                  Text(p.name.toUpperCase(),
+                      style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5)),
+                  const Spacer(),
+                  Text('${p.feltPercent}%',
+                      style: TextStyle(
+                          color: p.category.hue, fontWeight: FontWeight.w700)),
+                ],
+              ),
+            ),
+            if (canCheckIn)
+              _sheetItem(context, Icons.bolt, 'Check-in', 'checkin'),
+            if (p.status == ProjectStatus.aktiv ||
+                p.status == ProjectStatus.verhungert)
+              _sheetItem(context, Icons.check_circle_outline, 'Abschließen', 'complete'),
+            if (p.status == ProjectStatus.aktiv ||
+                p.status == ProjectStatus.verhungert)
+              _sheetItem(context, Icons.pause_circle_outline, 'Pausieren', 'pause'),
+            if (p.status == ProjectStatus.pausiert)
+              _sheetItem(context, Icons.play_circle_outline, 'Wieder aufnehmen', 'resume'),
+            if (p.status != ProjectStatus.beerdigt &&
+                p.status != ProjectStatus.abgeschlossen)
+              _sheetItem(context, Icons.brightness_3, 'Beerdigen', 'bury'),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || action == null) return;
+    switch (action) {
+      case 'checkin':
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => CheckInScreen(projectId: p.id),
+        ));
+        break;
+      case 'complete':
+        ledger.completeProject(p.id);
+        break;
+      case 'pause':
+        await _pauseSheet(ledger, p.id);
+        break;
+      case 'resume':
+        ledger.resumeProject(p.id);
+        break;
+      case 'bury':
+        await Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => BurialScreen(project: p),
+        ));
+        break;
+    }
+  }
+
+  Widget _sheetItem(BuildContext ctx, IconData icon, String label, String value) =>
+      ListTile(
+        leading: Icon(icon, color: AppColors.textSecondary),
+        title: Text(label, style: const TextStyle(color: AppColors.textPrimary)),
+        onTap: () => Navigator.pop(ctx, value),
+      );
+
+  Future<void> _pauseSheet(Ledger ledger, String id) async {
+    final ctrl = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Bewusst pausieren'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'Warum pausiert?'),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Abbrechen')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Pausieren')),
+        ],
+      ),
+    );
+    if (ok == true && ctrl.text.trim().isNotEmpty) {
+      ledger.pauseProject(id, reason: ctrl.text);
+    }
   }
 
   Future<void> _newProject() async {

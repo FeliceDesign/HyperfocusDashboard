@@ -145,15 +145,17 @@ class Ledger extends ChangeNotifier {
         id: _uuid.v4(),
         text: text,
         createdAt: now,
+        isSeed: true,
       ));
     }
-    if (initialPercent != null) {
-      project.checkIns.add(CheckIn(
-        id: _uuid.v4(),
-        date: now,
-        feltPercent: initialPercent.clamp(0, 100),
-      ));
-    }
+    // Der beim Anlegen erzeugte Start-Check-in ist ein Seed und zählt nie als
+    // Fortschritt — sonst könnte man sich per Import eine Bilanz bauen.
+    project.checkIns.add(CheckIn(
+      id: _uuid.v4(),
+      date: now,
+      feltPercent: (initialPercent ?? 0).clamp(0, 100),
+      isSeed: true,
+    ));
     _projects.add(project);
     _persist();
     notifyListeners();
@@ -298,6 +300,172 @@ class Ledger extends ChangeNotifier {
   }
 
   // ---------------------------------------------------------------------------
+  // Demo-Daten / Reset
+  // ---------------------------------------------------------------------------
+
+  bool get hasProjects => _projects.isNotEmpty;
+
+  /// Alle Daten löschen — die App wird wieder zum leeren Beichtstuhl.
+  void clearAll() {
+    _projects = [];
+    _persist();
+    notifyListeners();
+  }
+
+  /// Ein Demo-Datensatz, der alle Zustände gleichzeitig sichtbar macht:
+  /// Todeszone, cracked/dust, verhungert, pausiert, abgeschlossen, beerdigt.
+  void loadDemoData() {
+    _projects = _buildDemo();
+    _persist();
+    notifyListeners();
+  }
+
+  List<Project> _buildDemo() {
+    return [
+      _demo(
+        name: 'Spektra',
+        category: Category.code,
+        status: ProjectStatus.aktiv,
+        dod: 'Wenn es im App-Store steht und die Doku vollständig ist.',
+        // [tageZurück, prozent] — erster Eintrag ist der Seed.
+        checkIns: [[70, 60], [55, 68], [44, 76], [33, 78], [26, 78], [19, 78]],
+        deltas: [
+          ('Grundgerüst steht', 60, 44),
+          ('Doku-Kapitel 3', 44, null),
+          ('Export-Test', 19, null),
+        ],
+      ),
+      _demo(
+        name: 'CouchControl',
+        category: Category.code,
+        status: ProjectStatus.aktiv,
+        dod: 'Wenn ich den Fernseher komplett per App steuern kann.',
+        checkIns: [
+          [120, 70], [110, 78], [100, 85], [90, 91],
+          [80, 91], [70, 91], [60, 91], [50, 91], [41, 91]
+        ],
+        deltas: [
+          ('App-Store-Assets', 80, 70),
+          ('Lizenz-Text klären', 65, null),
+          ('Payment-Flow', 90, 41),
+        ],
+      ),
+      _demo(
+        name: 'MovieShare',
+        category: Category.foto,
+        status: ProjectStatus.aktiv,
+        dod: 'Wenn Freunde damit gemeinsam Filmlisten führen können.',
+        checkIns: [[20, 15], [12, 22], [7, 28], [2, 34]],
+        deltas: [
+          ('Trailer-Schnitt', 12, null),
+          ('Untertitel-Import', 7, null),
+        ],
+      ),
+      _demo(
+        name: 'Timeline-Kalender',
+        category: Category.design,
+        status: ProjectStatus.verhungert,
+        dod: 'Wenn die Monatsansicht mit Sync funktioniert.',
+        checkIns: [[90, 20], [80, 30], [70, 38], [60, 44], [47, 45]],
+        deltas: [
+          ('Sync-Bug', 70, null),
+          ('Monatsansicht', 60, 47),
+        ],
+      ),
+      _demo(
+        name: 'Bike-Navigation',
+        category: Category.code,
+        status: ProjectStatus.pausiert,
+        dod: 'Wenn Offline-Routing auf dem Lenker-Display läuft.',
+        checkIns: [[60, 30], [48, 40], [40, 48], [30, 54], [22, 58], [16, 60], [12, 62]],
+        deltas: [
+          ('Offline-Karten', 40, 22),
+          ('GPX-Import', 16, null),
+        ],
+        pauseReason: 'Wartet auf das neue Fahrrad im Frühjahr.',
+        resumeInDays: 90,
+      ),
+      _demo(
+        name: 'Portfolio-Website',
+        category: Category.design,
+        status: ProjectStatus.abgeschlossen,
+        dod: 'Wenn sie online ist und drei Case Studies zeigt.',
+        checkIns: [
+          [130, 40], [115, 55], [100, 66], [85, 74],
+          [70, 82], [50, 90], [30, 96], [8, 100]
+        ],
+        deltas: [
+          ('Case Studies', 100, 30),
+          ('Kontaktformular', 70, 50),
+        ],
+      ),
+      _demo(
+        name: 'Diffuser "Aura"',
+        category: Category.foto,
+        status: ProjectStatus.beerdigt,
+        dod: 'Wenn ein Prototyp Duft per App zeitgesteuert abgibt.',
+        checkIns: [[80, 20], [60, 40], [45, 55]],
+        deltas: [
+          ('Elektronik-Layout', 60, null),
+        ],
+        burial: BurialRecord(
+          date: DateTime.now().subtract(const Duration(days: 30)),
+          reason: 'Markt zu klein, Hardware-Stückkosten zu hoch.',
+          learning: 'Beim nächsten Hardware-Projekt zuerst die Stückkosten rechnen.',
+        ),
+      ),
+    ];
+  }
+
+  Project _demo({
+    required String name,
+    required Category category,
+    required ProjectStatus status,
+    required String dod,
+    required List<List<int>> checkIns,
+    List<(String, int, int?)> deltas = const [],
+    BurialRecord? burial,
+    String? pauseReason,
+    int? resumeInDays,
+  }) {
+    final now = DateTime.now();
+    DateTime at(int daysAgo) => now.subtract(Duration(days: daysAgo));
+
+    final createdAt = at(checkIns.first[0]);
+    final project = Project(
+      id: _uuid.v4(),
+      name: name,
+      category: category,
+      definitionOfDone: dod,
+      createdAt: createdAt,
+      status: status,
+      burial: burial,
+      pauseReason: pauseReason,
+      resumeDate: resumeInDays == null ? null : now.add(Duration(days: resumeInDays)),
+    );
+
+    for (var i = 0; i < checkIns.length; i++) {
+      project.checkIns.add(CheckIn(
+        id: _uuid.v4(),
+        date: at(checkIns[i][0]),
+        feltPercent: checkIns[i][1],
+        isSeed: i == 0,
+      ));
+    }
+
+    for (final d in deltas) {
+      project.deltas.add(DeltaItem(
+        id: _uuid.v4(),
+        text: d.$1,
+        createdAt: at(d.$2),
+        resolvedAt: d.$3 == null ? null : at(d.$3!),
+      ));
+    }
+
+    return project;
+  }
+
+  // ---------------------------------------------------------------------------
   // Wochenbericht
   // ---------------------------------------------------------------------------
 
@@ -315,24 +483,24 @@ class Ledger extends ChangeNotifier {
       if (p.status == ProjectStatus.beerdigt) continue;
 
       for (final d in p.deltas) {
-        if (!d.createdAt.isBefore(weekStart)) deltasNew++;
+        // Beim Anlegen eingetragene Deltas zählen nicht als "neu".
+        if (!d.isSeed && !d.createdAt.isBefore(weekStart)) deltasNew++;
         final r = d.resolvedAt;
         if (r != null && !r.isBefore(weekStart)) deltasClosed++;
       }
 
-      final chrono = p.checkInsChrono;
-      if (chrono.isNotEmpty) {
-        // Fortschritt der Woche: letzter Wert minus letzter Wert vor Wochenstart.
-        final before = chrono.where((c) => c.date.isBefore(weekStart)).toList();
-        final withinOrBefore = chrono.where((c) => !c.date.isAfter(now)).toList();
-        if (withinOrBefore.isNotEmpty) {
-          final startVal = before.isNotEmpty ? before.last.feltPercent : 0;
-          final endVal = withinOrBefore.last.feltPercent;
-          if (chrono.any((c) => !c.date.isBefore(weekStart))) {
-            netProgress += endVal - startVal;
-            projectsCounted++;
-          }
-        }
+      // Netto-Fortschritt: nur echte Check-ins. Beitrag eines Projekts =
+      // (letzter Check-in in der Woche) − (letzter Check-in vor der Woche).
+      // Existiert kein echter Check-in vor der Woche, ist der Beitrag 0 —
+      // nicht der Startwert.
+      final real = p.realCheckIns;
+      final before = real.where((c) => c.date.isBefore(weekStart)).toList();
+      final inWeek = real
+          .where((c) => !c.date.isBefore(weekStart) && !c.date.isAfter(now))
+          .toList();
+      if (before.isNotEmpty && inWeek.isNotEmpty) {
+        netProgress += inWeek.last.feltPercent - before.last.feltPercent;
+        projectsCounted++;
       }
 
       if (p.status == ProjectStatus.abgeschlossen) {

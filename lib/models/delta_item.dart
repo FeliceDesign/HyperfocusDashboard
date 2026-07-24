@@ -6,6 +6,7 @@ class DeltaItem {
     required this.text,
     required this.createdAt,
     this.resolvedAt,
+    this.isSeed = false,
   });
 
   final String id;
@@ -13,13 +14,20 @@ class DeltaItem {
   final DateTime createdAt;
   DateTime? resolvedAt;
 
+  /// Beim Anlegen des Projekts eingetragen — zählt nicht als "Delta neu"
+  /// der Woche.
+  final bool isSeed;
+
   bool get isOpen => resolvedAt == null;
+
+  int get ageInDays => DateTime.now().difference(createdAt).inDays;
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'text': text,
         'createdAt': createdAt.toIso8601String(),
         'resolvedAt': resolvedAt?.toIso8601String(),
+        'isSeed': isSeed,
       };
 
   factory DeltaItem.fromJson(Map<String, dynamic> json) => DeltaItem(
@@ -29,5 +37,6 @@ class DeltaItem {
         resolvedAt: json['resolvedAt'] == null
             ? null
             : DateTime.parse(json['resolvedAt'] as String),
+        isSeed: json['isSeed'] as bool? ?? false,
       );
 }

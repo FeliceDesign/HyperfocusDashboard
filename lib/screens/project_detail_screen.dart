@@ -79,7 +79,8 @@ class ProjectDetailScreen extends StatelessWidget {
               const SizedBox(width: 10),
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: Text('${project.momentum.arrow}  ${project.category.label}',
+                child: Text(
+                    '${project.momentum != null ? '${project.momentum!.arrow}  ' : ''}${project.category.label}',
                     style: const TextStyle(color: AppColors.textSecondary)),
               ),
             ],
@@ -184,7 +185,9 @@ class ProjectDetailScreen extends StatelessWidget {
   }
 
   Widget _deltaHistory(Project project) {
-    final open = project.openDeltas;
+    // Offene Deltas nach Alter absteigend — was am längsten offen ist, oben.
+    final open = project.openDeltas
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
     final resolved = project.resolvedDeltas
       ..sort((a, b) => (b.resolvedAt ?? b.createdAt).compareTo(a.resolvedAt ?? a.createdAt));
     if (project.deltas.isEmpty) {
@@ -198,7 +201,7 @@ class ProjectDetailScreen extends StatelessWidget {
           final stuck = project.isDeltaStuck(d);
           return _deltaRow(
             text: d.text,
-            trailing: 'offen seit ${shortDate(d.createdAt)}',
+            trailing: '${d.ageInDays} Tage offen',
             open: true,
             stuck: stuck,
           );

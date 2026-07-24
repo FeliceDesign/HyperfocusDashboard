@@ -16,15 +16,20 @@ class WeeklyReportScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Wochenbericht')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Text('WOCHE ${r.week} / ${r.year}',
-              style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1)),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 440),
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+          Center(
+            child: Text('WOCHE ${r.week} / ${r.year}',
+                style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1)),
+          ),
           const SizedBox(height: 24),
           _row('Netto-Fortschritt',
               '${r.netProgress >= 0 ? '+' : ''}${r.netProgress}%  über ${r.projectsCounted} ${r.projectsCounted == 1 ? 'Projekt' : 'Projekte'}'),
@@ -58,7 +63,9 @@ class WeeklyReportScreen extends StatelessWidget {
               child: Text('Keine Todeszone, nichts verhungert. Fürs Erste.',
                   style: TextStyle(color: AppColors.textFaint)),
             ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }

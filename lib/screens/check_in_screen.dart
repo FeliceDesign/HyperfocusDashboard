@@ -27,11 +27,15 @@ class _CheckInScreenState extends State<CheckInScreen> {
   late int _percent;
   final _note = TextEditingController();
 
+  /// Pre-Check-in erfasst: war das Projekt vor diesem Check-in stillgelegen?
+  bool _wasStale = false;
+
   @override
   void initState() {
     super.initState();
     final p = context.read<Ledger>().byId(widget.projectId);
     _percent = p?.feltPercent ?? 0;
+    _wasStale = p?.needsStaleDecision ?? false;
   }
 
   @override
@@ -73,6 +77,8 @@ class _CheckInScreenState extends State<CheckInScreen> {
       _note.text = reason;
     }
 
+    final staleDays = project.daysSinceMeaningfulChange;
+
     ledger.checkIn(
       projectId: widget.projectId,
       resolvedDeltaIds: _resolved,
@@ -80,7 +86,80 @@ class _CheckInScreenState extends State<CheckInScreen> {
       feltPercent: _percent,
       note: _note.text,
     );
+
+    // Schritt 4 — Statusfrage, nur wenn das Projekt vor dem Check-in
+    // länger als 21 Tage stillgelegen hat.
+    if (_wasStale && mounted) {
+      await _askStatus(ledger, project.name, staleDays);
+    }
+
     if (mounted) Navigator.of(context).pop();
+  }
+
+  /// Bewusst pausiert oder entglitten? Der psychologische Kern der App.
+  Future<void> _askStatus(Ledger ledger, String name, int days) async {
+    final action = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(name),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('lag seit $days Tagen.',
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 16)),
+            const SizedBox(height: 12),
+            const Text(
+              'Bewusst pausiert oder entglitten? "Pausiert" ist eine '
+              'Entscheidung — Decay stoppt, zählt nicht gegen WIP. '
+              '"Entglitten" heißt verhungert und zählt weiter gegen dich.',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'starved'),
+            child: const Text('Entglitten',
+                style: TextStyle(color: AppColors.danger)),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, 'pause'),
+            child: const Text('Bewusst pausiert'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    if (action == 'starved') {
+      ledger.markStarved(widget.projectId);
+    } else if (action == 'pause') {
+      final ctrl = TextEditingController();
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: const Text('Grund fürs Pausieren'),
+          content: TextField(
+            controller: ctrl,
+            autofocus: true,
+            decoration: const InputDecoration(hintText: 'Ein Grund muss sein.'),
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Pausieren'),
+            ),
+          ],
+        ),
+      );
+      if (ok == true) {
+        ledger.pauseProject(widget.projectId,
+            reason: ctrl.text.trim().isEmpty ? 'kein Grund angegeben' : ctrl.text);
+      }
+    }
   }
 
   Future<String?> _askWhy() async {
@@ -243,24 +322,33 @@ class _CheckInScreenState extends State<CheckInScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  d.text,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    decoration: checked ? TextDecoration.lineThrough : null,
-                    decorationColor: AppColors.textFaint,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      d.text,
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        decoration: checked ? TextDecoration.lineThrough : null,
+                        decorationColor: AppColors.textFaint,
+                      ),
+                    ),
+                    // Alter nur ab 30 Tagen — meistens genau dieses Item ist
+                    // der Grund, warum das Projekt steht.
+                    if (d.ageInDays > 30)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text('${d.ageInDays} Tage offen',
+                            style: TextStyle(
+                                color: stuck
+                                    ? AppColors.danger
+                                    : AppColors.textFaint,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600)),
+                      ),
+                  ],
                 ),
               ),
-              if (stuck)
-                const Padding(
-                  padding: EdgeInsets.only(left: 8),
-                  child: Text('steht',
-                      style: TextStyle(
-                          color: AppColors.danger,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700)),
-                ),
             ],
           ),
         ),

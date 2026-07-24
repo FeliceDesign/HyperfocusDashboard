@@ -12,8 +12,16 @@ class AppColors {
   static const textPrimary = Color(0xFFEDE6DC);
   static const textSecondary = Color(0xFFA89B8A);
   static const textFaint = Color(0xFF6E6355);
-  static const danger = Color(0xFFE05A4D);
+
+  // Verbindliche Farbsemantik — je Rolle genau eine Farbe:
+  /// Interaktiv / Auswahl / Primary: Buttons, aktive Chips, Slider, Picker.
+  static const interactive = Color(0xFF37BEB0);
+
+  /// Warnung: Todeszone, WIP-Limit erreicht, altes Delta. Verblasst nie.
   static const deathZone = Color(0xFFCF7A3A);
+
+  /// Harter Negativfakt: "Letzter Abschluss: noch keiner", verhungert.
+  static const danger = Color(0xFFE05A4D);
 }
 
 class AppTheme {
