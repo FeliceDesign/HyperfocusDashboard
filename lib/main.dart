@@ -19,7 +19,7 @@ class FocusLedgerApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => Ledger(Storage())..init(),
       child: MaterialApp(
-        title: 'Focus Ledger',
+        title: 'Non Finito',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.build(),
         home: const DashboardScreen(),

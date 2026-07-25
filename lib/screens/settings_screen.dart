@@ -44,7 +44,8 @@ class SettingsScreen extends StatelessWidget {
                           style: const TextStyle(
                               color: AppColors.textPrimary,
                               fontSize: 72,
-                              fontWeight: FontWeight.w800)),
+                              fontWeight: FontWeight.w800,
+                              fontFeatures: kTabular)),
                       const Padding(
                         padding: EdgeInsets.only(bottom: 16, left: 8),
                         child: Text('aktiv erlaubt',

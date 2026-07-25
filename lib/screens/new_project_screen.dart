@@ -7,7 +7,10 @@ import '../theme/app_theme.dart';
 
 /// Projekt anlegen. Definition of Done ist Pflicht — die erste Hürde.
 class NewProjectScreen extends StatefulWidget {
-  const NewProjectScreen({super.key});
+  const NewProjectScreen({super.key, this.initialName});
+
+  /// Vorbelegter Name — z.B. die Idee, für die gerade Platz geschaffen wurde.
+  final String? initialName;
 
   @override
   State<NewProjectScreen> createState() => _NewProjectScreenState();
@@ -20,6 +23,12 @@ class _NewProjectScreenState extends State<NewProjectScreen> {
   final _deltas = TextEditingController();
   Category _category = Category.code;
   int _startPercent = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialName != null) _name.text = widget.initialName!;
+  }
 
   @override
   void dispose() {
@@ -77,12 +86,12 @@ class _NewProjectScreenState extends State<NewProjectScreen> {
                   onSelected: (_) => setState(() => _category = c),
                   showCheckmark: false,
                   backgroundColor: AppColors.surface,
-                  selectedColor: c.hue.withValues(alpha: 0.22),
+                  selectedColor: AppColors.surfaceRaised,
                   side: BorderSide(
-                    color: selected ? c.hue : AppColors.border,
+                    color: selected ? AppColors.ink : AppColors.border,
                   ),
                   labelStyle: TextStyle(
-                    color: selected ? c.hue : AppColors.textSecondary,
+                    color: selected ? AppColors.ink : AppColors.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
                 );
@@ -131,7 +140,7 @@ class _NewProjectScreenState extends State<NewProjectScreen> {
               min: 0,
               max: 100,
               divisions: 100,
-              activeColor: _category.hue,
+              activeColor: AppColors.ink,
               label: '$_startPercent%',
               onChanged: (v) => setState(() => _startPercent = v.round()),
             ),
@@ -139,8 +148,8 @@ class _NewProjectScreenState extends State<NewProjectScreen> {
             FilledButton(
               onPressed: _submit,
               style: FilledButton.styleFrom(
-                backgroundColor: _category.hue,
-                foregroundColor: Colors.black,
+                backgroundColor: AppColors.ink,
+                foregroundColor: AppColors.background,
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               child: const Text('Projekt anlegen',

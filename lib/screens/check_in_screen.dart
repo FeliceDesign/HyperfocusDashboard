@@ -216,7 +216,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
           child: LinearProgressIndicator(
             value: (_page + 1) / 3,
             backgroundColor: AppColors.surface,
-            color: project.category.hue,
+            color: AppColors.ink,
             minHeight: 3,
           ),
         ),
@@ -248,8 +248,8 @@ class _CheckInScreenState extends State<CheckInScreen> {
               FilledButton(
                 onPressed: _next,
                 style: FilledButton.styleFrom(
-                  backgroundColor: project.category.hue,
-                  foregroundColor: Colors.black,
+                  backgroundColor: AppColors.ink,
+                  foregroundColor: AppColors.background,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
                 ),
@@ -309,7 +309,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: checked ? project.category.hue : AppColors.border,
+              color: checked ? AppColors.ink : AppColors.border,
             ),
           ),
           child: Row(
@@ -318,7 +318,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
                 checked
                     ? Icons.check_box_rounded
                     : Icons.check_box_outline_blank_rounded,
-                color: checked ? project.category.hue : AppColors.textFaint,
+                color: checked ? AppColors.ink : AppColors.textFaint,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -414,18 +414,20 @@ class _CheckInScreenState extends State<CheckInScreen> {
         Center(
           child: Text(
             '$_percent%',
-            style: TextStyle(
-              color: project.category.hue,
+            style: const TextStyle(
+              color: AppColors.ink,
               fontSize: 56,
               fontWeight: FontWeight.w800,
               letterSpacing: -2,
+              fontFeatures: kTabular,
             ),
           ),
         ),
         Center(
           child: Text(
             'vorher: $old%',
-            style: const TextStyle(color: AppColors.textFaint, fontSize: 13),
+            style: const TextStyle(
+                color: AppColors.textFaint, fontSize: 13, fontFeatures: kTabular),
           ),
         ),
         const SizedBox(height: 20),
@@ -433,7 +435,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 4),
           child: ProgressBar(
             percent: _percent,
-            color: project.category.hue,
+            color: stalenessColor(project.category.hue, project.staleness),
             staleness: project.staleness,
             height: 14,
             ghostPercent: old,
@@ -444,7 +446,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
           min: 0,
           max: 100,
           divisions: 100,
-          activeColor: project.category.hue,
+          activeColor: AppColors.ink,
           label: '$_percent%',
           onChanged: (v) => setState(() => _percent = v.round()),
         ),

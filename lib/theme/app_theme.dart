@@ -4,31 +4,47 @@ import '../models/staleness.dart';
 
 /// Dunkel, aber nicht das übliche Dev-Tool-Grau. Warmes Anthrazit, damit
 /// der Sättigungsverlust der verrottenden Karten überhaupt wirkt.
+/// Non Finito — Farbsystem. Grundregel: *Alles Kalte ist neutral, alles Warme
+/// ist eine Warnung.* Die Oberfläche ist durchgehend kühles Grau; Wärme
+/// erscheint ausschließlich dort, wo etwas nicht stimmt.
 class AppColors {
-  static const background = Color(0xFF17130F);
-  static const surface = Color(0xFF211C17);
-  static const surfaceRaised = Color(0xFF2A241D);
-  static const border = Color(0xFF3A3229);
-  static const textPrimary = Color(0xFFEDE6DC);
-  static const textSecondary = Color(0xFFA89B8A);
-  static const textFaint = Color(0xFF6E6355);
+  // Neutrale (kalt)
+  static const background = Color(0xFF101215); // --bg
+  static const surface = Color(0xFF171A1E); // --surface
+  static const surfaceRaised = Color(0xFF1E2227); // --surface-raised
+  static const border = Color(0xFF262B31); // --line
+  static const textPrimary = Color(0xFFE8EBEE); // --ink
+  static const textSecondary = Color(0xFF8A9198); // --ink-muted
+  static const textFaint = Color(0xFF5C646C); // --ink-dim
 
-  // Verbindliche Farbsemantik — je Rolle genau eine Farbe:
-  /// Interaktiv / Auswahl / Primary: Buttons, aktive Chips, Slider, Picker.
-  static const interactive = Color(0xFF37BEB0);
+  /// Kein Akzent-Farbton: interaktive Elemente sind --ink (nahezu weiß).
+  static const interactive = textPrimary;
 
-  /// Warnung: Todeszone, WIP-Limit erreicht, altes Delta. Verblasst nie.
-  static const deathZone = Color(0xFFCF7A3A);
+  // Warnfarben — die einzige Wärme. Werden vom Decay NIE entsättigt.
+  /// Todeszone, WIP-Limit erreicht, Delta älter als 30 Tage.
+  static const deathZone = Color(0xFFD9A441); // --warn
+  /// Verhungert, "Letzter Abschluss: noch keiner".
+  static const danger = Color(0xFFD9564A); // --alert
 
-  /// Harter Negativfakt: "Letzter Abschluss: noch keiner", verhungert.
-  static const danger = Color(0xFFE05A4D);
+  // Semantische Aliase
+  static const ink = textPrimary;
+  static const inkMuted = textSecondary;
+  static const inkDim = textFaint;
+  static const line = border;
+  static const warn = deathZone;
+  static const alert = danger;
 }
+
+/// Prozentwerte und Statistikzahlen mit Tabellenziffern — sonst springen die
+/// Zahlen beim Aktualisieren und stehen in Listen nicht bündig.
+const List<FontFeature> kTabular = [FontFeature.tabularFigures()];
 
 class AppTheme {
   static ThemeData build() {
     const base = ColorScheme.dark(
       surface: AppColors.background,
-      primary: AppColors.textPrimary,
+      primary: AppColors.textPrimary, // interaktiv = ink
+      onPrimary: AppColors.background, // Primary-Button: Text in --bg
       secondary: AppColors.deathZone,
       error: AppColors.danger,
     );

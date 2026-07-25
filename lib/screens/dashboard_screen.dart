@@ -5,6 +5,7 @@ import '../models/enums.dart';
 import '../models/project.dart';
 import '../services/ledger.dart';
 import '../theme/app_theme.dart';
+import '../widgets/glyphs.dart';
 import '../widgets/project_card.dart';
 import 'archive_screen.dart';
 import 'burial_screen.dart';
@@ -50,7 +51,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: projects.isEmpty
                   ? _empty(context)
                   : ListView.builder(
-                      padding: const EdgeInsets.only(bottom: 96, top: 4),
+                      // Genug Luft unten, damit der FAB keine Karte überlappt.
+                      padding: const EdgeInsets.only(bottom: 112, top: 4),
                       itemCount: projects.length,
                       itemBuilder: (context, i) {
                         final p = projects[i];
@@ -88,29 +90,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           Row(
             children: [
-              const Text('FOCUS LEDGER',
-                  style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.5)),
+              const NonFinitoMark(size: 22),
+              const SizedBox(width: 10),
+              const Wordmark(fontSize: 20),
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
+                  // WIP-Limit erreicht ist eine Warnung (warm), kein Fehler.
                   color: full
-                      ? AppColors.danger.withValues(alpha: 0.15)
+                      ? AppColors.warn.withValues(alpha: 0.15)
                       : AppColors.surface,
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
-                      color: full ? AppColors.danger : AppColors.border),
+                      color: full ? AppColors.warn : AppColors.border),
                 ),
                 child: Text(
                   'aktiv: ${ledger.activeCount} / ${ledger.wipLimit}',
                   style: TextStyle(
-                      color: full ? AppColors.danger : AppColors.textSecondary,
+                      color: full ? AppColors.warn : AppColors.textSecondary,
                       fontWeight: FontWeight.w700,
-                      fontSize: 13),
+                      fontSize: 13,
+                      fontFeatures: kTabular),
                 ),
               ),
               PopupMenuButton<String>(
@@ -129,13 +130,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Text('Letzter Abschluss: vor $daysSince Tagen',
-                  style: const TextStyle(color: AppColors.textFaint, fontSize: 12)),
+                  style: const TextStyle(
+                      color: AppColors.textFaint,
+                      fontSize: 12,
+                      fontFeatures: kTabular)),
             )
           else
+            // Harter Negativfakt → --alert.
             const Padding(
               padding: EdgeInsets.only(top: 2),
               child: Text('Letzter Abschluss: noch keiner',
-                  style: TextStyle(color: AppColors.textFaint, fontSize: 12)),
+                  style: TextStyle(color: AppColors.alert, fontSize: 12)),
             ),
         ],
       ),
@@ -196,8 +201,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           letterSpacing: 0.5)),
                   const Spacer(),
                   Text('${p.feltPercent}%',
-                      style: TextStyle(
-                          color: p.category.hue, fontWeight: FontWeight.w700)),
+                      style: const TextStyle(
+                          color: AppColors.ink,
+                          fontWeight: FontWeight.w700,
+                          fontFeatures: kTabular)),
                 ],
               ),
             ),
@@ -205,7 +212,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _sheetItem(context, Icons.bolt, 'Check-in', 'checkin'),
             if (p.status == ProjectStatus.aktiv ||
                 p.status == ProjectStatus.verhungert)
-              _sheetItem(context, Icons.check_circle_outline, 'Abschließen', 'complete'),
+              _sheetItem(context, Icons.check, 'Abschließen', 'complete'),
             if (p.status == ProjectStatus.aktiv ||
                 p.status == ProjectStatus.verhungert)
               _sheetItem(context, Icons.pause_circle_outline, 'Pausieren', 'pause'),
@@ -213,7 +220,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _sheetItem(context, Icons.play_circle_outline, 'Wieder aufnehmen', 'resume'),
             if (p.status != ProjectStatus.beerdigt &&
                 p.status != ProjectStatus.abgeschlossen)
-              _sheetItem(context, Icons.brightness_3, 'Beerdigen', 'bury'),
+              _sheetItem(context, Icons.horizontal_rule, 'Beerdigen', 'bury'),
             const SizedBox(height: 8),
           ],
         ),
@@ -279,17 +286,50 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _newProject() async {
     final ledger = context.read<Ledger>();
+    String? ideaName;
     if (ledger.wipFull) {
-      // Kein "Trotzdem"-Button. Erst Platz schaffen.
+      // Kein "Trotzdem"-Button. Erst die Idee benennen, dann Platz schaffen —
+      // damit die Abwägung beide Seiten der Waage zeigt.
+      ideaName = await _askIdeaName();
+      if (ideaName == null) return; // abgebrochen
       final freed = await Navigator.of(context).push<bool>(MaterialPageRoute(
-        builder: (_) => const WipBlockScreen(),
+        builder: (_) => WipBlockScreen(newIdeaName: ideaName),
       ));
       if (freed != true || ledger.wipFull) return;
     }
     if (!mounted) return;
     Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => const NewProjectScreen(),
+      builder: (_) => NewProjectScreen(initialName: ideaName),
     ));
+  }
+
+  Future<String?> _askIdeaName() async {
+    final ctrl = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Neue Idee'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(hintText: 'Wie heißt sie?'),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Abbrechen')),
+          FilledButton(
+            onPressed: () {
+              final t = ctrl.text.trim();
+              if (t.isNotEmpty) Navigator.pop(context, t);
+            },
+            child: const Text('Weiter'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _onMenu(String value) {

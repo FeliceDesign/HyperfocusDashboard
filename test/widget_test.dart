@@ -68,6 +68,17 @@ void main() {
       ]);
       expect(p.momentum, Momentum.flat);
     });
+
+    test('null bei stillgelegten Projekten (verhungert / > 21 Tage)', () {
+      final p = fresh(createdAt: daysAgo(60))..status = ProjectStatus.verhungert;
+      p.checkIns.addAll([
+        CheckIn(id: 'a', date: daysAgo(55), feltPercent: 30),
+        CheckIn(id: 'b', date: daysAgo(52), feltPercent: 40),
+        CheckIn(id: 'c', date: daysAgo(47), feltPercent: 45),
+      ]);
+      // Historisch steigend, aber seit 47 Tagen still → kein Momentum.
+      expect(p.momentum, isNull);
+    });
   });
 
   group('Todeszone', () {
@@ -141,6 +152,12 @@ void main() {
       // 29.12.2025 (Montag) liegt bereits in KW 1 / 2026.
       expect(isoWeekNumber(DateTime(2025, 12, 29)), 1);
       expect(isoWeekYear(DateTime(2025, 12, 29)), 2026);
+    });
+
+    test('Jahresübergang 2026 → KW 53', () {
+      // 2026 hat 53 Wochen: 31.12.2026 und 01.01.2027 sind beide KW 53.
+      expect(isoWeekNumber(DateTime(2026, 12, 31)), 53);
+      expect(isoWeekNumber(DateTime(2027, 1, 1)), 53);
     });
   });
 

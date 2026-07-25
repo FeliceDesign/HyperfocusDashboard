@@ -59,11 +59,17 @@ class ArchiveScreen extends StatelessWidget {
       );
 
   Widget _tile(BuildContext context, Project p, {required bool done}) {
-    final subtitle = done
-        ? 'abgeschlossen · ${shortDate(p.lastCheckIn?.date ?? p.createdAt)}'
-        : (p.burial != null
-            ? 'beerdigt ${shortDate(p.burial!.date)} · ${p.burial!.reason}'
-            : 'beerdigt');
+    final String subtitle;
+    if (done) {
+      subtitle = 'abgeschlossen · ${shortDate(p.lastCheckIn?.date ?? p.createdAt)}';
+    } else if (p.burial != null) {
+      // Beide Pflichtteile: Grund UND was du mitgenommen hast.
+      subtitle = 'beerdigt ${shortDate(p.burial!.date)}\n'
+          'Grund: ${p.burial!.reason}\n'
+          'Mitgenommen: ${p.burial!.learning}';
+    } else {
+      subtitle = 'beerdigt';
+    }
     return Card(
       color: AppColors.surface,
       margin: const EdgeInsets.only(bottom: 8),
@@ -72,15 +78,16 @@ class ArchiveScreen extends StatelessWidget {
         side: const BorderSide(color: AppColors.border),
       ),
       child: ListTile(
+        isThreeLine: !done && p.burial != null,
+        // Monochrome Glyphen: Haken ohne Kreis / schlicht durchgestrichen.
         leading: Icon(
-          done ? Icons.check_circle : Icons.brightness_3,
-          color: done ? p.category.hue : AppColors.textFaint,
+          done ? Icons.check : Icons.horizontal_rule,
+          color: done ? AppColors.ink : AppColors.textFaint,
         ),
         title: Text(p.name, style: const TextStyle(color: AppColors.textPrimary)),
         subtitle: Text(subtitle,
-            style: const TextStyle(color: AppColors.textFaint, fontSize: 12),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis),
+            style: const TextStyle(
+                color: AppColors.textFaint, fontSize: 12, height: 1.4)),
         onTap: () => Navigator.of(context).push(MaterialPageRoute(
           builder: (_) => ProjectDetailScreen(projectId: p.id),
         )),

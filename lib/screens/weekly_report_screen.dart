@@ -32,7 +32,7 @@ class WeeklyReportScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           _row('Netto-Fortschritt',
-              '${r.netProgress >= 0 ? '+' : ''}${r.netProgress}%  über ${r.projectsCounted} ${r.projectsCounted == 1 ? 'Projekt' : 'Projekte'}'),
+              '${r.netProgress >= 0 ? '+' : ''}${r.netProgress}%   ·  ${r.projectsCounted} von ${ledger.activeCount} Projekten bewegt'),
           _row('Deltas geschlossen', '${r.deltasClosed}'),
           _row('Deltas neu', '${r.deltasNew}'),
           _row('Abschlüsse', '${r.completions}'),
@@ -90,7 +90,8 @@ class WeeklyReportScreen extends StatelessWidget {
                     color:
                         emphasize ? AppColors.danger : AppColors.textPrimary,
                     fontSize: emphasize ? 16 : 15,
-                    fontWeight: FontWeight.w700)),
+                    fontWeight: FontWeight.w700,
+                    fontFeatures: kTabular)),
           ],
         ),
       );
@@ -119,7 +120,10 @@ class WeeklyReportScreen extends StatelessWidget {
             SizedBox(
               width: 48,
               child: Text(percent,
-                  style: TextStyle(color: color, fontWeight: FontWeight.w700)),
+                  style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.w700,
+                      fontFeatures: kTabular)),
             ),
             Expanded(
               child: Text(note,

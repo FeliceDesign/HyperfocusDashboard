@@ -41,11 +41,11 @@ enum ProjectStatus {
 /// Projekt-Kategorien. Farbe ist Information, nicht Dekoration —
 /// jede Kategorie hat einen Farbton, der durch Staleness entzogen wird.
 enum Category {
-  code('Code', Color(0xFF4FD1C5)),
-  foto('Foto', Color(0xFFF6AD55)),
-  design('Design', Color(0xFFB794F4)),
-  schreiben('Schreiben', Color(0xFF68D391)),
-  andere('Andere', Color(0xFFA0AEC0));
+  code('Code', Color(0xFF6E93A8)),
+  foto('Foto', Color(0xFF8C8AA8)),
+  design('Design', Color(0xFF7FA394)),
+  schreiben('Schreiben', Color(0xFF8E9AA6)),
+  andere('Andere', Color(0xFF6F757C));
 
   const Category(this.label, this.hue);
 
@@ -57,11 +57,6 @@ enum Category {
 }
 
 /// Richtung der letzten Check-ins.
-enum Momentum {
-  up('↗'),
-  flat('→'),
-  down('↘');
-
-  const Momentum(this.arrow);
-  final String arrow;
-}
+/// Richtung der letzten Check-ins. Die Darstellung erfolgt über monochrome
+/// Vektor-Glyphen (siehe widgets/glyphs.dart), nicht über Emoji-Zeichen.
+enum Momentum { up, flat, down }

@@ -5,6 +5,7 @@ import '../models/project.dart';
 import '../models/staleness.dart';
 import '../theme/app_theme.dart';
 import '../utils/dates.dart';
+import 'glyphs.dart';
 import 'grain_overlay.dart';
 import 'progress_bar.dart';
 
@@ -26,9 +27,10 @@ class ProjectCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final staleness = project.staleness;
     final isPaused = project.status == ProjectStatus.pausiert;
+    // Pausierte Karten ruhen sichtbar: kein Decay, dauerhaft abgedunkelt.
     final effStale = isPaused ? Staleness.frisch : staleness;
+    final dim = isPaused ? 0.0 : effStale.dim;
     final hue = stalenessColor(project.category.hue, effStale);
-    final dim = isPaused ? 0.4 : effStale.dim;
 
     final openDeltas = project.openDeltas;
     final topDeltas = openDeltas.take(2).map((d) => d.text).join(', ');
@@ -47,7 +49,9 @@ class ProjectCard extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Material(
+      child: Opacity(
+        opacity: isPaused ? 0.55 : 1.0,
+        child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
@@ -97,6 +101,7 @@ class ProjectCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }
@@ -155,19 +160,16 @@ class ProjectCard extends StatelessWidget {
                 color: textColor,
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
+                fontFeatures: kTabular,
               ),
             ),
-            // Momentum-Pfeil nur ab drei echten Check-ins.
+            // Momentum-Glyph nur ab drei echten Check-ins.
             if (project.momentum != null) ...[
               const SizedBox(width: 6),
-              Text(
-                project.momentum!.arrow,
-                style: TextStyle(
-                  color: project.momentum == Momentum.down
-                      ? AppColors.danger
-                      : metaColor,
-                  fontSize: 16,
-                ),
+              Icon(
+                momentumIcon(project.momentum!),
+                size: 16,
+                color: momentumColor(project.momentum!),
               ),
             ],
           ],
@@ -191,7 +193,8 @@ class ProjectCard extends StatelessWidget {
                 ),
                 TextSpan(
                   text: topDeltas,
-                  style: TextStyle(color: textColor, fontSize: 13),
+                  style: TextStyle(
+                      color: textColor, fontSize: 13, fontWeight: FontWeight.w500),
                 ),
                 if (extra > 0)
                   TextSpan(

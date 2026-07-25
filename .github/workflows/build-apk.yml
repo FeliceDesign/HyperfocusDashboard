@@ -47,15 +47,25 @@ jobs:
       - name: Generate Android platform files
         run: flutter create --platforms=android --org com.felicedesign --project-name focus_ledger .
 
-      - name: Set launcher label to "Focus Ledger"
+      - name: Set launcher label to "Non Finito"
         run: |
           MANIFEST=android/app/src/main/AndroidManifest.xml
           if [ -f "$MANIFEST" ]; then
-            sed -i 's/android:label="focus_ledger"/android:label="Focus Ledger"/' "$MANIFEST"
+            sed -i 's/android:label="focus_ledger"/android:label="Non Finito"/' "$MANIFEST"
           fi
 
       - name: Install dependencies
         run: flutter pub get
+
+      # Generate the Non Finito ring icon (butt-cap dashed ring) and bake the
+      # Android launcher mipmaps from it.
+      - name: Generate launcher icon
+        run: |
+          python3 -m pip install --quiet --disable-pip-version-check pillow \
+            || python3 -m pip install --quiet --user pillow \
+            || python3 -m pip install --quiet --break-system-packages pillow
+          python3 tool/gen_icon.py
+          dart run flutter_launcher_icons
 
       - name: Analyze
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
@@ -70,7 +80,7 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: focus-ledger-release-apk
+          name: non-finito-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
 
@@ -80,7 +90,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
-          name: Focus Ledger build ${{ github.run_number }}
+          name: Non Finito build ${{ github.run_number }}
           files: build/app/outputs/flutter-apk/app-release.apk
           prerelease: true
           fail_on_unmatched_files: false

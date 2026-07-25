@@ -1,6 +1,9 @@
-# Focus Ledger
+# Non Finito
 
 Ein Dashboard für kreative Projekte, das nicht motiviert, sondern **konfrontiert**.
+
+> *Non finito* — aus der Kunstgeschichte: ein bewusst unvollendetes Werk.
+> Genau das, was diese App verwaltet — ohne zu beschämen.
 
 Die meisten Produktivitäts-Apps optimieren fürs *Anfangen*. Focus Ledger
 optimiert fürs **Abschließen**. Jede Design-Entscheidung folgt einer Frage:
@@ -40,7 +43,7 @@ Jeder Push auf `main` oder einen `claude/**`-Branch baut automatisch eine
 Release-APK über GitHub Actions:
 
 1. Reiter **Actions** → Workflow **Build Android APK** → letzter Lauf →
-   Artefakt **focus-ledger-release-apk**, **oder**
+   Artefakt **non-finito-release-apk**, **oder**
 2. Reiter **Releases** → aktuellster `build-*`-Eintrag → `app-release.apk`.
 
 APK aufs Android-Gerät kopieren und installieren (Installation aus unbekannten

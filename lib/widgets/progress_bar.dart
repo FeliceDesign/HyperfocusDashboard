@@ -29,7 +29,12 @@ class ProgressBar extends StatelessWidget {
       builder: (context, constraints) {
         final w = constraints.maxWidth;
         final fill = (percent.clamp(0, 100) / 100) * w;
-        final crackX = staleness.hasCrack ? fill * 0.62 : null;
+        // Der Balken franst mit steigendem Verfall zum Ende hin aus —
+        // dasselbe Prinzip wie im Icon. cracked: eine Lücke; dust: drei
+        // Lücken, deren Abstände zum Ende hin abnehmen.
+        final List<double> crackFractions = staleness == Staleness.staub
+            ? const [0.50, 0.72, 0.88]
+            : (staleness.hasCrack ? const [0.62] : const []);
         return SizedBox(
           height: height,
           width: w,
@@ -50,10 +55,10 @@ class ProgressBar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              // Bruchkante bei rissig/staub
-              if (crackX != null)
+              // Bruchkanten
+              for (final f in crackFractions)
                 Positioned(
-                  left: crackX,
+                  left: fill * f,
                   top: 0,
                   bottom: 0,
                   child: Container(width: 2, color: AppColors.background),

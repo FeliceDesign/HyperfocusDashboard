@@ -9,7 +9,10 @@ import 'burial_screen.dart';
 /// Wenn das WIP-Limit voll ist, gibt es keinen "Trotzdem"-Button. Du musst ein
 /// bestehendes Projekt abschließen, pausieren oder beerdigen.
 class WipBlockScreen extends StatelessWidget {
-  const WipBlockScreen({super.key});
+  const WipBlockScreen({super.key, this.newIdeaName});
+
+  /// Die blockierte neue Idee — damit die Abwägung beide Seiten der Waage zeigt.
+  final String? newIdeaName;
 
   @override
   Widget build(BuildContext context) {
@@ -30,18 +33,34 @@ class WipBlockScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          if (newIdeaName != null && newIdeaName!.trim().isNotEmpty) ...[
+            const Text('NEUE IDEE',
+                style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1)),
+            const SizedBox(height: 4),
+            Text(newIdeaName!.trim(),
+                style: const TextStyle(
+                    color: AppColors.ink,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700)),
+            const SizedBox(height: 16),
+          ],
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.danger.withValues(alpha: 0.10),
+              // Eine Entscheidung, kein Fehler → --warn, nicht --alert.
+              color: AppColors.warn.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.danger.withValues(alpha: 0.4)),
+              border: Border.all(color: AppColors.warn.withValues(alpha: 0.4)),
             ),
             child: Text(
               'Du hast ${ledger.activeCount} von ${ledger.wipLimit} aktiven '
-              'Projekten. Ist die neue Idee wirklich wichtiger als eines davon? '
+              'Projekten. Ist diese Idee wirklich wichtiger als eines davon? '
               'Meistens nicht. Aber du musst es aktiv entscheiden.',
-              style: const TextStyle(color: AppColors.danger, fontSize: 14, height: 1.4),
+              style: const TextStyle(color: AppColors.warn, fontSize: 14, height: 1.4),
             ),
           ),
           const SizedBox(height: 16),
@@ -52,7 +71,7 @@ class WipBlockScreen extends StatelessWidget {
   }
 
   Widget _card(BuildContext context, Ledger ledger, project) {
-    final hue = project.category.hue;
+    final hue = stalenessColor(project.category.hue, project.staleness);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
@@ -74,8 +93,11 @@ class WipBlockScreen extends StatelessWidget {
                         letterSpacing: 0.5)),
               ),
               Text('${project.feltPercent}%',
-                  style: TextStyle(
-                      color: hue, fontSize: 18, fontWeight: FontWeight.w800)),
+                  style: const TextStyle(
+                      color: AppColors.ink,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      fontFeatures: kTabular)),
             ],
           ),
           const SizedBox(height: 10),
@@ -84,12 +106,13 @@ class WipBlockScreen extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              _btn('Abschließen', hue, () => ledger.completeProject(project.id)),
+              _btn('Abschließen', AppColors.ink,
+                  () => ledger.completeProject(project.id)),
               const SizedBox(width: 8),
               _btn('Pausieren', AppColors.textSecondary,
                   () => _pause(context, ledger, project.id)),
               const SizedBox(width: 8),
-              _btn('Beerdigen', AppColors.danger, () async {
+              _btn('Beerdigen', AppColors.textSecondary, () async {
                 await Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => BurialScreen(project: project),
                 ));

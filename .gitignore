@@ -28,3 +28,6 @@ Thumbs.db
 
 # Local env
 *.local
+
+# Generated launcher icon PNGs (built in CI by tool/gen_icon.py)
+/assets/icon/

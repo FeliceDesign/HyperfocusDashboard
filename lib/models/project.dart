@@ -118,6 +118,13 @@ class Project {
   ///   fallend:  percentDelta <= −3
   ///   flach:    alles andere
   Momentum? get momentum {
+    // Ein stillgelegtes Projekt hat kein Momentum — historisch korrekt
+    // gerechnet wäre inhaltlich Unsinn.
+    if (status == ProjectStatus.verhungert ||
+        status == ProjectStatus.pausiert ||
+        daysSinceMeaningfulChange > kStaleQuestionDays) {
+      return null;
+    }
     final real = realCheckIns;
     if (real.length < 3) return null;
     final n = real.length;

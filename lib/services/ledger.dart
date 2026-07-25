@@ -352,7 +352,7 @@ class Ledger extends ChangeNotifier {
       ),
       _demo(
         name: 'MovieShare',
-        category: Category.foto,
+        category: Category.code, // Web-Projekt (Astro/SolidJS/SQLite)
         status: ProjectStatus.aktiv,
         dod: 'Wenn Freunde damit gemeinsam Filmlisten führen können.',
         checkIns: [[20, 15], [12, 22], [7, 28], [2, 34]],
@@ -411,7 +411,7 @@ class Ledger extends ChangeNotifier {
         burial: BurialRecord(
           date: DateTime.now().subtract(const Duration(days: 30)),
           reason: 'Markt zu klein, Hardware-Stückkosten zu hoch.',
-          learning: 'Beim nächsten Hardware-Projekt zuerst die Stückkosten rechnen.',
+          learning: 'ESP32-Sensorik sitzt — wandert in ein anderes Projekt.',
         ),
       ),
     ];

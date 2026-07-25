@@ -7,6 +7,7 @@ import '../models/staleness.dart';
 import '../services/ledger.dart';
 import '../theme/app_theme.dart';
 import '../utils/dates.dart';
+import '../widgets/glyphs.dart';
 import '../widgets/history_graph.dart';
 import '../widgets/progress_bar.dart';
 import 'burial_screen.dart';
@@ -24,7 +25,8 @@ class ProjectDetailScreen extends StatelessWidget {
     if (project == null) {
       return const Scaffold(body: Center(child: Text('Projekt weg.')));
     }
-    final hue = project.category.hue;
+    // Kategoriefarbe nur für Balken und Graph — entsättigt durch Staleness.
+    final hue = stalenessColor(project.category.hue, project.staleness);
 
     return Scaffold(
       appBar: AppBar(
@@ -51,8 +53,8 @@ class ProjectDetailScreen extends StatelessWidget {
       floatingActionButton: (project.status == ProjectStatus.aktiv ||
               project.status == ProjectStatus.verhungert)
           ? FloatingActionButton.extended(
-              backgroundColor: hue,
-              foregroundColor: Colors.black,
+              backgroundColor: AppColors.ink,
+              foregroundColor: AppColors.background,
               onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (_) => CheckInScreen(projectId: project.id),
               )),
@@ -74,14 +76,25 @@ class ProjectDetailScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text('${project.feltPercent}%',
-                  style: TextStyle(
-                      color: hue, fontSize: 44, fontWeight: FontWeight.w800)),
+                  style: const TextStyle(
+                      color: AppColors.ink,
+                      fontSize: 44,
+                      fontWeight: FontWeight.w800,
+                      fontFeatures: kTabular)),
               const SizedBox(width: 10),
               Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Text(
-                    '${project.momentum != null ? '${project.momentum!.arrow}  ' : ''}${project.category.label}',
-                    style: const TextStyle(color: AppColors.textSecondary)),
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  children: [
+                    if (project.momentum != null) ...[
+                      Icon(momentumIcon(project.momentum!),
+                          size: 16, color: momentumColor(project.momentum!)),
+                      const SizedBox(width: 6),
+                    ],
+                    Text(project.category.label,
+                        style: const TextStyle(color: AppColors.textSecondary)),
+                  ],
+                ),
               ),
             ],
           ),
@@ -126,7 +139,7 @@ class ProjectDetailScreen extends StatelessWidget {
         text = 'PAUSIERT${project.pauseReason != null ? ' · ${project.pauseReason}' : ''}';
         break;
       case ProjectStatus.abgeschlossen:
-        color = project.category.hue;
+        color = AppColors.ink;
         text = 'ABGESCHLOSSEN';
         break;
       case ProjectStatus.beerdigt:
@@ -135,9 +148,7 @@ class ProjectDetailScreen extends StatelessWidget {
         break;
       case ProjectStatus.aktiv:
         final s = project.staleness;
-        color = project.inDeathZone
-            ? AppColors.deathZone
-            : (s == Staleness.frisch ? project.category.hue : AppColors.textSecondary);
+        color = project.inDeathZone ? AppColors.deathZone : AppColors.textSecondary;
         text = project.inDeathZone
             ? 'TODESZONE · flach seit ${project.flatStreak} Check-ins'
             : '${s.label.toUpperCase()} · letzte Bewegung ${agoLabel(project.daysSinceMeaningfulChange)}';
@@ -155,7 +166,7 @@ class ProjectDetailScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border(left: BorderSide(color: project.category.hue, width: 3)),
+        border: const Border(left: BorderSide(color: AppColors.line, width: 3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,9 +288,10 @@ class ProjectDetailScreen extends StatelessWidget {
               SizedBox(
                 width: 44,
                 child: Text('${c.feltPercent}%',
-                    style: TextStyle(
-                        color: project.category.hue,
-                        fontWeight: FontWeight.w700)),
+                    style: const TextStyle(
+                        color: AppColors.ink,
+                        fontWeight: FontWeight.w700,
+                        fontFeatures: kTabular)),
               ),
               Expanded(
                 child: Column(
