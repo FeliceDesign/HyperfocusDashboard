@@ -42,6 +42,8 @@ class WeeklyReportScreen extends StatelessWidget {
                 ? 'noch keiner'
                 : 'vor ${r.daysSinceLastCompletion} Tagen',
             emphasize: true,
+            // Rot erst, wenn es Rot verdient: 0–29 Tage sind ganz normal.
+            valueColor: _completionColor(r.daysSinceLastCompletion),
           ),
           const SizedBox(height: 28),
           if (r.deathZone.isNotEmpty) ...[
@@ -70,7 +72,18 @@ class WeeklyReportScreen extends StatelessWidget {
     );
   }
 
-  Widget _row(String label, String value, {bool emphasize = false}) => Padding(
+  /// Schwellwerte für „Letzter Abschluss": Acht Tage sind kein Alarm.
+  /// 0–29 → --ink, 30–89 → --warn, 90+ oder „noch keiner" → --alert.
+  static Color _completionColor(int? days) {
+    if (days == null) return AppColors.alert; // noch keiner
+    if (days >= 90) return AppColors.alert;
+    if (days >= 30) return AppColors.warn;
+    return AppColors.ink;
+  }
+
+  Widget _row(String label, String value,
+          {bool emphasize = false, Color? valueColor}) =>
+      Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -87,8 +100,8 @@ class WeeklyReportScreen extends StatelessWidget {
             ),
             Text(value,
                 style: TextStyle(
-                    color:
-                        emphasize ? AppColors.danger : AppColors.textPrimary,
+                    color: valueColor ??
+                        (emphasize ? AppColors.danger : AppColors.textPrimary),
                     fontSize: emphasize ? 16 : 15,
                     fontWeight: FontWeight.w700,
                     fontFeatures: kTabular)),

@@ -101,6 +101,21 @@ void main() {
       ]);
       expect(p.inDeathZone, isTrue);
     });
+
+    test('CouchControl-Regression: 91% seit über 21 Tagen still bleibt Todeszone',
+        () {
+      // momentum == null (seit > 21 Tagen still), aber drei echte Check-ins bei
+      // 91% — das todeszonigste Projekt überhaupt. null darf nicht entwarnen.
+      final p = fresh(createdAt: daysAgo(120));
+      p.checkIns.addAll([
+        CheckIn(id: 'a', date: daysAgo(90), feltPercent: 91),
+        CheckIn(id: 'b', date: daysAgo(70), feltPercent: 91),
+        CheckIn(id: 'c', date: daysAgo(41), feltPercent: 91),
+      ]);
+      expect(p.momentum, isNull);
+      expect(p.daysSinceMeaningfulChange, greaterThan(21));
+      expect(p.inDeathZone, isTrue);
+    });
   });
 
   group('Seed / Fortschritt', () {
@@ -143,7 +158,7 @@ void main() {
   });
 
   group('ISO-Kalenderwoche', () {
-    test('24.07.2026 ist KW 30', () {
+    test('24.07.2026 ist KW 30 / 2026', () {
       expect(isoWeekNumber(DateTime(2026, 7, 24)), 30);
       expect(isoWeekYear(DateTime(2026, 7, 24)), 2026);
     });
@@ -154,10 +169,22 @@ void main() {
       expect(isoWeekYear(DateTime(2025, 12, 29)), 2026);
     });
 
-    test('Jahresübergang 2026 → KW 53', () {
-      // 2026 hat 53 Wochen: 31.12.2026 und 01.01.2027 sind beide KW 53.
+    // Die vier Pflicht-Tests aus Update 03, Punkt 4. Entscheidend ist, dass
+    // das Wochenjahr (isoWeekYear) am Jahresende dem Donnerstag folgt und
+    // nicht dem Kalenderjahr — sonst stünde „KW 53 / 2027".
+    test('31.12.2026 ist KW 53 / 2026', () {
       expect(isoWeekNumber(DateTime(2026, 12, 31)), 53);
+      expect(isoWeekYear(DateTime(2026, 12, 31)), 2026);
+    });
+
+    test('01.01.2027 ist KW 53 / 2026', () {
       expect(isoWeekNumber(DateTime(2027, 1, 1)), 53);
+      expect(isoWeekYear(DateTime(2027, 1, 1)), 2026);
+    });
+
+    test('04.01.2027 ist KW 1 / 2027', () {
+      expect(isoWeekNumber(DateTime(2027, 1, 4)), 1);
+      expect(isoWeekYear(DateTime(2027, 1, 4)), 2027);
     });
   });
 

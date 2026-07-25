@@ -41,11 +41,11 @@ enum ProjectStatus {
 /// Projekt-Kategorien. Farbe ist Information, nicht Dekoration —
 /// jede Kategorie hat einen Farbton, der durch Staleness entzogen wird.
 enum Category {
-  code('Code', Color(0xFF6E93A8)),
-  foto('Foto', Color(0xFF8C8AA8)),
-  design('Design', Color(0xFF7FA394)),
-  schreiben('Schreiben', Color(0xFF8E9AA6)),
-  andere('Andere', Color(0xFF6F757C));
+  code('Code', Color(0xFF4FA6CE)),
+  foto('Foto', Color(0xFF8B7FD4)),
+  design('Design', Color(0xFF57C2A0)),
+  schreiben('Schreiben', Color(0xFF7B95C4)),
+  andere('Andere', Color(0xFF818A93));
 
   const Category(this.label, this.hue);
 

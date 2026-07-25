@@ -13,9 +13,13 @@ class AppColors {
   static const surface = Color(0xFF171A1E); // --surface
   static const surfaceRaised = Color(0xFF1E2227); // --surface-raised
   static const border = Color(0xFF262B31); // --line
-  static const textPrimary = Color(0xFFE8EBEE); // --ink
-  static const textSecondary = Color(0xFF8A9198); // --ink-muted
-  static const textFaint = Color(0xFF5C646C); // --ink-dim
+  static const textPrimary = Color(0xFFF2F5F7); // --ink
+  static const textSecondary = Color(0xFFA6AEB6); // --ink-muted
+  static const textFaint = Color(0xFF6B747C); // --ink-dim
+
+  /// Track (ungefüllter Teil) des Fortschrittsbalkens — bewusst heller als
+  /// die Kartenoberfläche, damit der gefüllte Teil einen sichtbaren Bezug hat.
+  static const progressTrack = Color(0xFF20262C);
 
   /// Kein Akzent-Farbton: interaktive Elemente sind --ink (nahezu weiß).
   static const interactive = textPrimary;

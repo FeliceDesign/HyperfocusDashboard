@@ -159,12 +159,18 @@ class Project {
   /// Die Todeszone: 70–95% mit flachem oder fallendem Momentum — und erst ab
   /// drei echten Check-ins, sonst ist die Kategorie entwertet, bevor sie das
   /// erste Mal etwas bedeutet.
+  ///
+  /// `momentum == null` bedeutet „kein Momentum feststellbar" (z. B. seit über
+  /// 21 Tagen still) — das qualifiziert für die Todeszone, es entwarnt nicht.
+  /// Nur ein *steigendes* Momentum schließt aus. Deshalb wird die Drei-Check-in-
+  /// Schwelle direkt über [realCheckInCount] geprüft und nicht über `momentum`,
+  /// sonst fällt genau das todeszonigste Projekt (hoher Stand, lange still)
+  /// durch die Lücke zwischen den beiden `null`-Ursachen.
   bool get inDeathZone {
     if (!status.countsAgainstWip) return false;
-    final m = momentum;
-    if (m == null) return false; // < 3 echte Check-ins
+    if (realCheckInCount < 3) return false;
     final p = feltPercent;
-    return p >= 70 && p <= 95 && m != Momentum.up;
+    return p >= 70 && p <= 95 && momentum != Momentum.up;
   }
 
   /// Soll die Pausiert-oder-verhungert-Frage gestellt werden?

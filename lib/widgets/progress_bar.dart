@@ -40,10 +40,11 @@ class ProgressBar extends StatelessWidget {
           width: w,
           child: Stack(
             children: [
-              // Track
+              // Track — heller als der Kartenhintergrund, damit der gefüllte
+              // Teil einen sichtbaren Bezug behält.
               Container(
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceRaised,
+                  color: AppColors.progressTrack,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),

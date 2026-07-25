@@ -20,31 +20,32 @@ enum Staleness {
   }
 
   /// Wie stark die Sättigung entzogen wird (0 = volle Farbe, 1 = monochrom).
-  /// Sättigung: fresh 100%, cool 70%, cracked 40%, dust 15%.
+  /// Steilere Kurve: Sättigung fresh 100%, cool 55%, cracked 22%, dust 6%.
+  /// Ein frisches Projekt ist eindeutig farbig, ein verstaubtes monochrom.
   double get desaturation {
     switch (this) {
       case Staleness.frisch:
         return 0.0;
       case Staleness.kuehl:
-        return 0.30;
+        return 0.45;
       case Staleness.rissig:
-        return 0.60;
+        return 0.78;
       case Staleness.staub:
-        return 0.85;
+        return 0.94;
     }
   }
 
-  /// Textdeckkraft-Verlust: fresh 100%, cool 85%, cracked 70%, dust 55%.
+  /// Textdeckkraft-Verlust: fresh 100%, cool 88%, cracked 74%, dust 58%.
   double get dim {
     switch (this) {
       case Staleness.frisch:
         return 0.0;
       case Staleness.kuehl:
-        return 0.15;
+        return 0.12;
       case Staleness.rissig:
-        return 0.30;
+        return 0.26;
       case Staleness.staub:
-        return 0.45;
+        return 0.42;
     }
   }
 

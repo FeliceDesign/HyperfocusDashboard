@@ -46,6 +46,12 @@ class ProjectCard extends StatelessWidget {
       AppColors.background,
       dim * 0.7,
     )!;
+    // Label-Ton (--ink-dim), für „Fehlt:" — deutlich schwächer als der Inhalt.
+    final labelColor = Color.lerp(
+      AppColors.textFaint,
+      AppColors.background,
+      dim * 0.7,
+    )!;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -70,8 +76,8 @@ class ProjectCard extends StatelessWidget {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 14, 12),
-                  child: _content(context, textColor, metaColor, hue, effStale,
-                      topDeltas, extra, isPaused),
+                  child: _content(context, textColor, metaColor, labelColor,
+                      hue, effStale, topDeltas, extra, isPaused),
                 ),
               ),
               // Todeszone-Markierung: dünne Linie am linken Kartenrand.
@@ -110,6 +116,7 @@ class ProjectCard extends StatelessWidget {
     BuildContext context,
     Color textColor,
     Color metaColor,
+    Color labelColor,
     Color hue,
     Staleness staleness,
     String topDeltas,
@@ -151,6 +158,7 @@ class ProjectCard extends StatelessWidget {
                 percent: project.feltPercent,
                 color: hue,
                 staleness: staleness,
+                height: 6,
               ),
             ),
             const SizedBox(width: 12),
@@ -189,17 +197,17 @@ class ProjectCard extends StatelessWidget {
               children: [
                 TextSpan(
                   text: 'Fehlt: ',
-                  style: TextStyle(color: metaColor, fontSize: 13),
+                  style: TextStyle(color: labelColor, fontSize: 15),
                 ),
                 TextSpan(
                   text: topDeltas,
                   style: TextStyle(
-                      color: textColor, fontSize: 13, fontWeight: FontWeight.w500),
+                      color: textColor, fontSize: 15, fontWeight: FontWeight.w500),
                 ),
                 if (extra > 0)
                   TextSpan(
                     text: '  +$extra',
-                    style: TextStyle(color: metaColor, fontSize: 13),
+                    style: TextStyle(color: labelColor, fontSize: 15),
                   ),
               ],
             ),
@@ -215,15 +223,16 @@ class ProjectCard extends StatelessWidget {
           children: [
             Text(
               'letzter Check-in: ${agoLabel(project.daysSinceCheckIn)}',
-              style: TextStyle(color: metaColor, fontSize: 12),
+              style: TextStyle(
+                  color: metaColor, fontSize: 13, fontWeight: FontWeight.w400),
             ),
             const Spacer(),
+            // Badges gibt es nur für Status, nie für Verfallsstufen — der
+            // Verfall bleibt ein rein visueller Mechanismus.
             if (project.status == ProjectStatus.verhungert)
               _tag('VERHUNGERT', AppColors.danger)
             else if (project.inDeathZone)
-              _tag('TODESZONE', AppColors.deathZone)
-            else if (!isPaused && staleness != Staleness.frisch)
-              _tag(staleness.label.toUpperCase(), metaColor),
+              _tag('TODESZONE', AppColors.deathZone),
           ],
         ),
       ],
